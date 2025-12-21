@@ -341,11 +341,12 @@ int init_connect(void)
 void decode_pos(char *s)
 {
     double latitude, longitude;
-    uint64_t heading;
+    double heading;
 
+    printf("q: %s\n" , s);
     strtok(s + 6, ";"); //pitch
     strtok(NULL, ";"); // bank
-    heading = strtoll(strtok(NULL, ";"), NULL, 10); //heading
+    heading = strtof(strtok(NULL, ";"), NULL); //heading
     strtok(NULL, ";"); //altitude
     strtok(NULL, ";"); //TAS
     latitude = strtof(strtok(NULL, ";"), NULL);
@@ -497,7 +498,7 @@ int main(int argc, char **argv)
         double lon = center_tx / (double)(1 << zoom_level) * 2 * M_PI - M_PI;
         char info[128];
         snprintf(info, sizeof(info), "Zoom: %d  Center: %.6f, %.6f PSX: %.6f, %.6f, %.6f", zoom_level,
-                 lat, lon, Pos.latitude, Pos.longitude, (float)Pos.heading);
+                 lat, lon, Pos.latitude, Pos.longitude, (float)Pos.heading*M_PI/180.0);
         DrawText(info, 10, 10, 16, BLACK);
 
         EndDrawing();

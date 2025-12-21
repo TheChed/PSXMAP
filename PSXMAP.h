@@ -8,7 +8,7 @@
  struct pos{
     double latitude;
     double longitude;
-    uint64_t heading;
+    double heading;
 } Pos;
 
 typedef struct DLNode {
