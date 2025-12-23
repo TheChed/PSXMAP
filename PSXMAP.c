@@ -343,7 +343,7 @@ void decode_pos(char *s)
     double latitude, longitude;
     double heading;
 
-    printf("q: %s\n" , s);
+    printf("q: %s\n", s);
     strtok(s + 6, ";"); //pitch
     strtok(NULL, ";"); // bank
     heading = strtof(strtok(NULL, ";"), NULL); //heading
@@ -368,24 +368,18 @@ int main(int argc, char **argv)
     pthread_detach(TPSX);
 
     sleep(2);
-    //center_tx = lon_to_xtile_d(start_lon, zoom_level);
-    //center_ty = lat_to_ytile_d(start_lat, zoom_level);
     center_tx = lon_to_xtile_d(Pos.longitude, zoom_level);
     center_ty = lat_to_ytile_d(Pos.latitude, zoom_level);
 
     mkdir(CACHE_DIR, 0755); // ignore error if exists
 
-    // Init raylib window
-    const int winW = 800, winH = 600;
-    InitWindow(winW, winH, "C OSM Map Viewer (raylib)");
-    SetWindowMinSize(320, 240);
-    SetTargetFPS(77);
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "PSXMAP");
+    SetTargetFPS(60);
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     bool dragging = false;
     Vector2 lastMouse = { 0, 0 };
-
 
     while (!WindowShouldClose()) {
         // Input handling --------------------------------
@@ -423,12 +417,9 @@ int main(int argc, char **argv)
 
         // Rendering -------------------------------------
 
-        int window_w = GetScreenWidth();
-        int window_h = GetScreenHeight();
-
         // tiles range to draw
-        int tiles_w = (window_w / TILE_SIZE) + 3;
-        int tiles_h = (window_h / TILE_SIZE) + 3;
+        int tiles_w = (WINDOW_WIDTH / TILE_SIZE) + 3;
+        int tiles_h = (WINDOW_HEIGHT / TILE_SIZE) + 3;
 
         // center tile indices (integer) and fractional parts
         center_tx = lon_to_xtile_d(Pos.longitude, zoom_level);
@@ -440,11 +431,12 @@ int main(int argc, char **argv)
         double frac_x = cx - center_ix;
         double frac_y = cy - center_iy;
 
-        double start_x = window_w / 2.0 - frac_x * TILE_SIZE;
-        double start_y = window_h / 2.0 - frac_y * TILE_SIZE;
+        double start_x = WINDOW_WIDTH / 2.0 - frac_x * TILE_SIZE;
+        double start_y = WINDOW_HEIGHT / 2.0 - frac_y * TILE_SIZE;
 
         int half_w = tiles_w / 2;
         int half_h = tiles_h / 2;
+
         RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
         BeginTextureMode(target);
 
@@ -465,7 +457,6 @@ int main(int argc, char **argv)
                 try_load_tile_texture(z, tx, ty, &loaded);
                 Texture2D *cached = find_texture_cache(z, tx, ty);
                 if (cached && cached->id != 0) {
-                    //DrawTextureEx(*cached, (Vector2){ (float)px, (float)py }, 0.0f, 1.0f, WHITE);
                     DrawTextureEx(*cached, (Vector2){ (float)px, (float)py }, 0, 1.0f, WHITE);
                 } else {
                     // placeholder
@@ -476,8 +467,11 @@ int main(int argc, char **argv)
         }
 
         // draw crosshair at center
-        DrawLine(window_w / 2 - 10, window_h / 2, window_w / 2 + 10, window_h / 2, RED);
-        DrawLine(window_w / 2, window_h / 2 - 10, window_w / 2, window_h / 2 + 10, RED);
+        DrawLine(WINDOW_WIDTH / 2 - 10, WINDOW_HEIGHT / 2, WINDOW_WIDTH / 2 + 10, WINDOW_HEIGHT / 2,
+                 RED);
+        DrawLine(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 10, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 10,
+                 RED);
+
         EndTextureMode();
         BeginDrawing();
         ClearBackground((Color){ 200, 200, 200, 255 });
@@ -489,7 +483,8 @@ int main(int argc, char **argv)
                            (float)GetScreenWidth(), (float)GetScreenHeight() };
 
         Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-        DrawTexturePro(target.texture, source, dest, origin,360-Pos.heading*180.0/M_PI, WHITE);
+        DrawTexturePro(target.texture, source, dest, origin, 360 - Pos.heading * 180.0 / M_PI,
+                       WHITE);
 
         // draw status (zoom & center lat/lon)
         // compute center lat lon from tile coords
@@ -497,11 +492,13 @@ int main(int argc, char **argv)
         double lat = atan(0.5 * (exp(n) - exp(-n)));
         double lon = center_tx / (double)(1 << zoom_level) * 2 * M_PI - M_PI;
         char info[128];
-        snprintf(info, sizeof(info), "Zoom: %d  Center: %.6f, %.6f PSX: %.6f, %.6f, %.6f", zoom_level,
-                 lat, lon, Pos.latitude, Pos.longitude, (float)Pos.heading*M_PI/180.0);
+        snprintf(info, sizeof(info), "Zoom: %d  Center: %.6f, %.6f PSX: %.6f, %.6f, %.6f",
+                 zoom_level, lat, lon, Pos.latitude, Pos.longitude,
+                 (float)Pos.heading * 180 / M_PI);
         DrawText(info, 10, 10, 16, BLACK);
 
         EndDrawing();
+        UnloadRenderTexture(target);
     }
 
     // cleanup

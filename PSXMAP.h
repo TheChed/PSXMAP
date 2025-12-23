@@ -1,9 +1,17 @@
 #include <stdint.h>
+
+
+
 #define TILE_SIZE 256
 #define CACHE_DIR "tilecache"
-#define USER_AGENT "C-OSM-Raylib-Viewer/1.0"
+#define USER_AGENT "PSXMAP"
 #define M_PI 3.14159265359
 #define MAXBUFF 65536
+
+
+    // Init raylib window
+#define WINDOW_WIDTH  800
+#define WINDOW_HEIGHT 600
 
  struct pos{
     double latitude;
